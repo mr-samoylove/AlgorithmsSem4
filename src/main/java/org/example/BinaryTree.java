@@ -1,5 +1,8 @@
 package org.example;
 
+import java.util.ArrayDeque;
+import java.util.Stack;
+
 public class BinaryTree<T extends Comparable<T>> {
     private Node root;
 
@@ -20,12 +23,9 @@ public class BinaryTree<T extends Comparable<T>> {
     }
 
     public void printThreeUppermost() {
-        if (root == null)
-            System.out.println("Tree is empty");
-        else if (root.left == null)
-            System.out.println("Left is null");
-        else if (root.right == null)
-            System.out.println("Right is null");
+        if (root == null) System.out.println("Tree is empty");
+        else if (root.left == null) System.out.println("Left is null");
+        else if (root.right == null) System.out.println("Right is null");
         else {
             System.out.printf("root: %s, left: %s, right: %s\n", root.value, root.left.value, root.right.value);
         }
@@ -36,38 +36,51 @@ public class BinaryTree<T extends Comparable<T>> {
         if (root == null) {
             root = node;
             root.color = Color.BLACK;
-        } else if (tryAdd(root, node)) {
+        } else if (tryAdd(node)) {
             root = rebalance(root);
-        } else
-            return false;
+        } else return false;
         return true;
     }
 
-    private boolean tryAdd(Node current, Node newNode) {
-        int difference = current.value.compareTo(newNode.value);
-        if (difference != 0) {
-            if (difference > 0) {
-                if (current.left != null) {
-                    boolean result = tryAdd(current.left, newNode);
-                    current.left = rebalance(current.left);
-                    return result;
+    private boolean tryAdd(Node newNode) {
+        Stack<Node> stack = new Stack<>();
+        Node current = root;
+        stack.add(current);
+        boolean added = false;
+        while (!added) {
+            int difference = current.value.compareTo(newNode.value);
+            if (difference != 0) {
+                if (difference > 0) {
+                    if (current.left != null) {
+                        stack.add(current.left);
+                        current = current.left;
+                    } else {
+                        current.left = newNode;
+                        added = true;
+                    }
                 } else {
-                    current.left = newNode;
-                    return true;
+                    if (current.right != null) {
+                        stack.add(current.right);
+                        current = current.right;
+                    } else {
+                        current.right = newNode;
+                        added = true;
+                    }
                 }
             } else {
-                if (current.right != null) {
-                    boolean result = tryAdd(current.right, newNode);
-                    current.right = rebalance(current.right);
-                    return result;
-                } else {
-                    current.right = newNode;
-                    return true;
-                }
+                stack.clear();
+                return false;
             }
+        } // while
+        Node lowerMost;
+        while (!stack.isEmpty()) {
+            lowerMost = stack.pop();
+            if (lowerMost.left != null) lowerMost.left = rebalance(lowerMost.left);
+            if (lowerMost.right != null) lowerMost.right = rebalance(lowerMost.right);
+
         }
-        return false;
-    }
+        return added;
+    } // tryAdd
 
     private Node rebalance(Node node) {
         if (node.right != null && node.right.color == Color.RED && (node.left == null || node.left.color == Color.BLACK))
